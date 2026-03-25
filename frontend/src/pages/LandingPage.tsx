@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 
 const CARDS = [
   {
@@ -26,6 +27,9 @@ export default function LandingPage() {
 
   return (
     <div className="landing">
+      <div className="page-topbar">
+        <ThemeToggle />
+      </div>
       <div className="landing-hero">
         <h1 className="landing-title">AI Office</h1>
         <p className="landing-subtitle">เลือกที่ปรึกษา AI ของคุณ</p>

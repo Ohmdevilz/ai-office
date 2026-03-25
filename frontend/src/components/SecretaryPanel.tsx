@@ -1,26 +1,21 @@
 import { useState } from "react";
 import { runTask } from "../api";
 import type { AgentType } from "../api";
+import FormatSelector from "./FormatSelector";
+import { FORMAT_OPTIONS } from "../data/formats";
 
 interface Props {
   agent: AgentType;
   title: string;
   icon: string;
-  placeholder: string;
   accentColor: string;
 }
 
 type Status = "idle" | "loading" | "success" | "error";
 
-export default function SecretaryPanel({
-  agent,
-  title,
-  icon,
-  placeholder,
-  accentColor,
-}: Props) {
+export default function SecretaryPanel({ agent, title, icon, accentColor }: Props) {
   const [task, setTask] = useState("");
-  const [expectedOutput, setExpectedOutput] = useState("");
+  const [selectedFormat, setSelectedFormat] = useState("");
   const [result, setResult] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
@@ -36,7 +31,7 @@ export default function SecretaryPanel({
     try {
       const res = await runTask(agent, {
         task: task.trim(),
-        ...(expectedOutput.trim() && { expected_output: expectedOutput.trim() }),
+        ...(selectedFormat && { expected_output: selectedFormat }),
       });
       setResult(res.result);
       setStatus("success");
@@ -48,11 +43,13 @@ export default function SecretaryPanel({
 
   function handleClear() {
     setTask("");
-    setExpectedOutput("");
+    setSelectedFormat("");
     setResult("");
     setError("");
     setStatus("idle");
   }
+
+  const isLoading = status === "loading";
 
   return (
     <div className="panel" style={{ "--accent": accentColor } as React.CSSProperties}>
@@ -67,33 +64,34 @@ export default function SecretaryPanel({
           <textarea
             value={task}
             onChange={(e) => setTask(e.target.value)}
-            placeholder={placeholder}
             rows={4}
-            disabled={status === "loading"}
+            disabled={isLoading}
           />
+          <span className="input-hint">
+            ใส่คำสั่งหรือโจทย์ที่ต้องการ แล้วเลือกรูปแบบผลลัพธ์ด้านล่าง จากนั้นกด ส่งคำสั่ง
+          </span>
         </label>
 
-        <label>
-          รูปแบบผลลัพธ์ที่ต้องการ <span className="optional">(optional)</span>
-          <input
-            type="text"
-            value={expectedOutput}
-            onChange={(e) => setExpectedOutput(e.target.value)}
-            placeholder="เช่น คำแนะนำ 3 ข้อ, ตารางสรุป, แผนการเทรดสั้นๆ"
-            disabled={status === "loading"}
+        <div className="format-section">
+          <span className="format-label">
+            รูปแบบผลลัพธ์ <span className="optional">(optional)</span>
+          </span>
+          <FormatSelector
+            options={FORMAT_OPTIONS[agent]}
+            selected={selectedFormat}
+            onChange={setSelectedFormat}
+            disabled={isLoading}
           />
-        </label>
+        </div>
 
         <div className="panel-actions">
           <button
             type="submit"
             className="btn-primary"
-            disabled={status === "loading" || !task.trim()}
+            disabled={isLoading || !task.trim()}
           >
-            {status === "loading" ? (
-              <>
-                <span className="spinner" /> กำลังประมวลผล…
-              </>
+            {isLoading ? (
+              <><span className="spinner" /> กำลังประมวลผล…</>
             ) : (
               "ส่งคำสั่ง"
             )}
@@ -117,11 +115,8 @@ export default function SecretaryPanel({
       {status === "success" && (
         <div className="result-box result-success">
           <div className="result-header">
-            <span>ผลลัพธ์จากเลขา</span>
-            <button
-              className="btn-copy"
-              onClick={() => navigator.clipboard.writeText(result)}
-            >
+            <span>ผลลัพธ์</span>
+            <button className="btn-copy" onClick={() => navigator.clipboard.writeText(result)}>
               คัดลอก
             </button>
           </div>
