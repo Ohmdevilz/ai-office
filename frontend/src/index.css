@@ -470,6 +470,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  overflow: visible;
 }
 
 .format-btn {
@@ -510,6 +511,8 @@ body {
   bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
+  width: max-content;
+  white-space: nowrap;
   background: #1e2130;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -517,14 +520,10 @@ body {
   font-size: 0.75rem;
   line-height: 1.5;
   padding: 7px 12px;
-  white-space: nowrap;
-  max-width: 240px;
-  white-space: normal;
-  text-align: center;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.15s;
-  z-index: 10;
+  z-index: 100;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
