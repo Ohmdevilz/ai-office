@@ -451,6 +451,53 @@ body {
   opacity: 0.85;
 }
 
+/* ─── Quick Prompts ────────────────────────────────────────────────────────── */
+.quick-prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quick-prompts-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.quick-prompts-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-prompt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font: 13px/1 var(--sans);
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.quick-prompt-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--text-heading);
+}
+
+.quick-prompt-btn:active:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.quick-prompt-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* ─── Format Selector ──────────────────────────────────────────────────────── */
 .format-section {
   display: flex;

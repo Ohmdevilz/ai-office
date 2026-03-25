@@ -2,7 +2,9 @@ import { useState } from "react";
 import { runTask } from "../api";
 import type { AgentType } from "../api";
 import FormatSelector from "./FormatSelector";
+import QuickPrompts from "./QuickPrompts";
 import { FORMAT_OPTIONS } from "../data/formats";
+import { QUICK_PROMPTS } from "../data/quickPrompts";
 
 interface Props {
   agent: AgentType;
@@ -59,6 +61,12 @@ export default function SecretaryPanel({ agent, title, icon, accentColor }: Prop
       </div>
 
       <form onSubmit={handleSubmit} className="panel-form">
+        <QuickPrompts
+          prompts={QUICK_PROMPTS[agent]}
+          onSelect={(text) => setTask(text)}
+          disabled={isLoading}
+        />
+
         <label>
           คำสั่ง / โจทย์
           <textarea
