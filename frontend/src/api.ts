@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "https://ai-office-production-4bd2.up.railway.app";
 
 export type AgentType = "marketing" | "trader";
 
