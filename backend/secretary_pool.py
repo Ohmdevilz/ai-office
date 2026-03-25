@@ -6,10 +6,9 @@ load_dotenv()
 
 
 def _build_llm() -> LLM:
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
-        raise ValueError("GEMINI_API_KEY not found. Please set it in the .env file.")
-    os.environ["GOOGLE_API_KEY"] = api_key
+        raise ValueError("GOOGLE_API_KEY not found. Please set it in the .env file.")
     return LLM(model="gemini/gemini-2.5-flash", api_key=api_key)
 
 
