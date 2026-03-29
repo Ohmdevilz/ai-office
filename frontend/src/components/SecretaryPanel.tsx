@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { runTask } from "../api";
 import type { AgentType } from "../api";
 import FormatSelector from "./FormatSelector";
@@ -21,6 +21,34 @@ export default function SecretaryPanel({ agent, title, icon, accentColor }: Prop
   const [result, setResult] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isTrader = agent === "trader";
+
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreviewUrl(previewUrl);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      // ตัด prefix "data:image/...;base64," ออก เหลือแค่ base64 string
+      const base64 = dataUrl.split(",")[1];
+      setImageBase64(base64);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleRemoveImage() {
+    setImageBase64(null);
+    setImagePreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,6 +62,7 @@ export default function SecretaryPanel({ agent, title, icon, accentColor }: Prop
       const res = await runTask(agent, {
         task: task.trim(),
         ...(selectedFormat && { expected_output: selectedFormat }),
+        ...(isTrader && imageBase64 && { image_base64: imageBase64 }),
       });
       setResult(res.result);
       setStatus("success");
@@ -49,6 +78,7 @@ export default function SecretaryPanel({ agent, title, icon, accentColor }: Prop
     setResult("");
     setError("");
     setStatus("idle");
+    handleRemoveImage();
   }
 
   const isLoading = status === "loading";
@@ -80,6 +110,33 @@ export default function SecretaryPanel({ agent, title, icon, accentColor }: Prop
           </span>
         </label>
 
+        {isTrader && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png"
+              className="upload-input-hidden"
+              onChange={handleImageChange}
+              disabled={isLoading}
+            />
+            {imagePreviewUrl && (
+              <div className="image-preview-area">
+                <img src={imagePreviewUrl} alt="กราฟที่อัปโหลด" className="image-preview" />
+                <button
+                  type="button"
+                  className="image-remove-btn"
+                  onClick={handleRemoveImage}
+                  disabled={isLoading}
+                  title="ลบรูป"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
         <div className="format-section">
           <span className="format-label">
             รูปแบบผลลัพธ์ <span className="optional">(optional)</span>
@@ -93,6 +150,18 @@ export default function SecretaryPanel({ agent, title, icon, accentColor }: Prop
         </div>
 
         <div className="panel-actions">
+          {isTrader && (
+            <button
+              type="button"
+              className={`btn-upload${imageBase64 ? " btn-upload--active" : ""}`}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              title="อัปโหลดรูปกราฟ (JPG/PNG)"
+            >
+              📷 {imageBase64 ? "เปลี่ยนรูป" : "Upload รูปกราฟ"}
+            </button>
+          )}
+
           <button
             type="submit"
             className="btn-primary"

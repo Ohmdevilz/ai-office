@@ -21,6 +21,7 @@ app.add_middleware(
 class TaskRequest(BaseModel):
     task: str
     expected_output: str | None = None
+    image_base64: str | None = None
 
 
 class TaskResponse(BaseModel):
@@ -75,6 +76,8 @@ async def trader_endpoint(body: TaskRequest):
         kwargs = {"task_description": body.task}
         if body.expected_output:
             kwargs["expected_output"] = body.expected_output
+        if body.image_base64:
+            kwargs["image_base64"] = body.image_base64
 
         result = await asyncio.to_thread(run_trader_task, **kwargs)
         await asyncio.to_thread(save_conversation, "trader", body.task, result, body.expected_output)

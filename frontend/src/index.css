@@ -441,6 +441,89 @@ body {
   right: 24px;
 }
 
+/* ─── Image Upload ─────────────────────────────────────────────────────────── */
+.upload-input-hidden {
+  display: none;
+}
+
+.btn-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 9px 16px;
+  font: 14px/1 var(--sans);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.btn-upload:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent);
+  border-style: solid;
+}
+
+.btn-upload--active {
+  color: var(--accent);
+  border-color: var(--accent);
+  border-style: solid;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.btn-upload--active:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.btn-upload:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.image-preview-area {
+  position: relative;
+  display: inline-block;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  max-width: 100%;
+  line-height: 0;
+}
+
+.image-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.image-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.75rem;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.image-remove-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.8);
+}
+
+.image-remove-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* ─── Input Hint ───────────────────────────────────────────────────────────── */
 .input-hint {
   font-size: 0.78rem;

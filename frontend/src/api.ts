@@ -5,6 +5,7 @@ export type AgentType = "marketing" | "trader";
 export interface TaskRequest {
   task: string;
   expected_output?: string;
+  image_base64?: string;
 }
 
 export interface TaskResponse {
