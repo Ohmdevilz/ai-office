@@ -3,6 +3,7 @@ import litellm
 from crewai import Agent, Task, Crew, Process, LLM
 from dotenv import load_dotenv
 from database import search_knowledge_base, format_kb_context
+from perplexity_service import fetch_market_context
 
 load_dotenv()
 
@@ -85,8 +86,18 @@ def run_trader_task(
 ) -> str:
     llm = _build_llm()
     api_key = os.getenv("GOOGLE_API_KEY") or ""
+    perplexity_key = os.getenv("PERPLEXITY_API_KEY") or ""
 
-    # วิเคราะห์รูปกราฟด้วย Gemini Vision (ถ้ามีรูป)
+    # 1) ดึง Knowledge Base ที่เกี่ยวข้อง
+    kb_chunks = search_knowledge_base(task_description, limit=5)
+    kb_context = format_kb_context(kb_chunks)
+
+    # 2) ดึงข้อมูล real-time จาก Perplexity (Economic Calendar + Gold News)
+    market_context = ""
+    if perplexity_key:
+        market_context = fetch_market_context(perplexity_key)
+
+    # 3) วิเคราะห์รูปกราฟด้วย Gemini Vision (ถ้ามีรูป)
     chart_analysis = ""
     if image_base64 and api_key:
         raw = _analyze_chart_image(image_base64, api_key)
@@ -96,12 +107,8 @@ def run_trader_task(
             "=== END CHART ANALYSIS ===\n"
         )
 
-    # ดึง Knowledge Base ที่เกี่ยวข้องมาประกอบการวิเคราะห์
-    kb_chunks = search_knowledge_base(task_description, limit=5)
-    kb_context = format_kb_context(kb_chunks)
-
-    # รวม context ทั้งหมด: KB + Chart Vision + Task
-    enriched_task = f"{kb_context}{chart_analysis}\n{task_description}"
+    # รวม context ทั้งหมด: KB + Market Data + Chart + Task
+    enriched_task = f"{kb_context}\n{market_context}{chart_analysis}\n{task_description}"
 
     agent = Agent(
         role="นักวิเคราะห์กราฟและที่ปรึกษาการเทรดสาย SMC",
@@ -117,8 +124,9 @@ def run_trader_task(
             "กระแสเงินทุนโลก, SMC (Liquidity, FVG, Order Block, BOS/CHoCH), "
             "เครื่องมือ OANDA, เทคนิคการเทรด, Money Management และ Trading Psychology "
             "ก่อนตอบทุกครั้ง คุณจะอ้างอิง Knowledge Base ใน KNOWLEDGE BASE REFERENCE "
+            "ข้อมูล Economic Calendar และ Gold News ล่าสุดใน ECONOMIC CALENDAR และ GOLD NEWS "
             "และถ้ามี CHART IMAGE ANALYSIS ให้อ้างอิงผลวิเคราะห์กราฟนั้นประกอบด้วย "
-            "เพื่อให้การวิเคราะห์ถูกต้องและสอดคล้องกับสิ่งที่เห็นในกราฟจริง "
+            "เพื่อให้การวิเคราะห์ครอบคลุมทั้งเทคนิคและปัจจัยมหภาคล่าสุด "
             "ตอบในรูปแบบรายงานวิเคราะห์ที่ชัดเจน มีโครงสร้าง นำไปใช้ได้จริง "
             f"{NO_GREETING}"
         ),
