@@ -1,11 +1,14 @@
+import logging
 import os
 import litellm
 from crewai import Agent, Task, Crew, Process, LLM
 from dotenv import load_dotenv
 from database import search_knowledge_base, format_kb_context
-from perplexity_service import fetch_market_context
+from perplexity_service import fetch_gold_news
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 NO_GREETING = (
     "ห้ามขึ้นต้นด้วยคำว่า 'เรียน' 'จากภารกิจที่ได้รับ' หรือประโยคเกริ่นนำใดๆ "
@@ -92,10 +95,19 @@ def run_trader_task(
     kb_chunks = search_knowledge_base(task_description, limit=5)
     kb_context = format_kb_context(kb_chunks)
 
-    # 2) ดึงข้อมูล real-time จาก Perplexity (Economic Calendar + Gold News)
-    market_context = ""
+    # 2) ดึง Gold News ล่าสุดจาก Perplexity
+    gold_news_context = ""
     if perplexity_key:
-        market_context = fetch_market_context(perplexity_key)
+        try:
+            raw_news = fetch_gold_news(perplexity_key)
+            if raw_news:
+                gold_news_context = (
+                    "=== GOLD NEWS — ข่าวล่าสุด 24-48 ชม. ===\n"
+                    f"{raw_news}\n"
+                    "=== END GOLD NEWS ===\n"
+                )
+        except Exception as exc:
+            logger.warning("fetch_gold_news failed: %s", exc)
 
     # 3) วิเคราะห์รูปกราฟด้วย Gemini Vision (ถ้ามีรูป)
     chart_analysis = ""
@@ -107,8 +119,8 @@ def run_trader_task(
             "=== END CHART ANALYSIS ===\n"
         )
 
-    # รวม context ทั้งหมด: KB + Market Data + Chart + Task
-    enriched_task = f"{kb_context}\n{market_context}{chart_analysis}\n{task_description}"
+    # รวม context ทั้งหมด: KB + Gold News + Chart + Task
+    enriched_task = f"{kb_context}\n{gold_news_context}{chart_analysis}\n{task_description}"
 
     agent = Agent(
         role="นักวิเคราะห์กราฟและที่ปรึกษาการเทรดสาย SMC",
@@ -124,7 +136,7 @@ def run_trader_task(
             "กระแสเงินทุนโลก, SMC (Liquidity, FVG, Order Block, BOS/CHoCH), "
             "เครื่องมือ OANDA, เทคนิคการเทรด, Money Management และ Trading Psychology "
             "ก่อนตอบทุกครั้ง คุณจะอ้างอิง Knowledge Base ใน KNOWLEDGE BASE REFERENCE "
-            "ข้อมูล Economic Calendar และ Gold News ล่าสุดใน ECONOMIC CALENDAR และ GOLD NEWS "
+            "และ Gold News ล่าสุดใน GOLD NEWS "
             "และถ้ามี CHART IMAGE ANALYSIS ให้อ้างอิงผลวิเคราะห์กราฟนั้นประกอบด้วย "
             "เพื่อให้การวิเคราะห์ครอบคลุมทั้งเทคนิคและปัจจัยมหภาคล่าสุด "
             "ตอบในรูปแบบรายงานวิเคราะห์ที่ชัดเจน มีโครงสร้าง นำไปใช้ได้จริง "
