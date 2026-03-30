@@ -17,7 +17,12 @@ _MODEL = "sonar-pro"
 _TIMEOUT = 40  # seconds
 
 
-def _query(prompt: str, api_key: str) -> str:
+def _query(prompt: str, api_key: str, system: str = "") -> str:
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+
     resp = requests.post(
         _API_BASE,
         headers={
@@ -26,7 +31,7 @@ def _query(prompt: str, api_key: str) -> str:
         },
         json={
             "model": _MODEL,
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": messages,
             "temperature": 0.1,
         },
         timeout=_TIMEOUT,
@@ -38,28 +43,26 @@ def _query(prompt: str, api_key: str) -> str:
 def fetch_economic_calendar(api_key: str) -> str:
     """ดึง Economic Calendar USD High Impact วันนี้ถึงศุกร์ จาก Forex Factory ผ่าน Perplexity"""
     today = date.today().strftime("%Y-%m-%d")
-    friday = "ศุกร์นี้"
-    prompt = (
-        f"วันนี้คือ {today} "
-        f"ค้นหาจาก Forex Factory (forexfactory.com) ว่าตั้งแต่วันนี้ถึง{friday} "
-        "มีข่าว USD High Impact อะไรบ้าง "
-        "โดยเฉพาะรายการต่อไปนี้ถ้ามีในสัปดาห์นี้: "
-        "NFP (Non-Farm Payrolls), ADP Non-Farm Employment Change, "
-        "JOLTS Job Openings, Initial Jobless Claims (Unemployment Claims), "
-        "CB Consumer Confidence, ISM Manufacturing PMI, ISM Services PMI, "
-        "Retail Sales, Core Retail Sales, CPI, Core CPI, PPI, PCE, Core PCE, "
-        "GDP, FOMC Meeting/Statement/Minutes, Fed Chair Powell Speech, "
-        "Fed Member speeches, Average Hourly Earnings, Unemployment Rate\n\n"
-        "สำหรับแต่ละรายการให้ระบุ:\n"
-        "- วันที่และเวลา (GMT+7)\n"
-        "- ชื่อข่าว\n"
-        "- Forecast (ถ้ามี)\n"
-        "- Previous\n"
-        "- ผลกระทบต่อทองคำ: ถ้า Actual ออกมาดีกว่า Forecast → USD แข็ง → ทองลง (Bearish Gold) "
-        "/ ถ้าแย่กว่า → USD อ่อน → ทองขึ้น (Bullish Gold) / Speech ให้ระบุว่า Hawkish หรือ Dovish\n\n"
-        "จัดในรูปแบบตารางที่อ่านง่าย ตอบเป็นภาษาไทย"
+    system = (
+        "You are a financial data retrieval assistant. "
+        "Only report data you can verify from actual web sources. "
+        "Never hallucinate numbers."
     )
-    return _query(prompt, api_key)
+    prompt = (
+        f"Today is {today}. "
+        "Search Forex Factory (forexfactory.com) and Investing.com "
+        "for this week's USD High Impact economic events from today through Friday. "
+        "List only events you can actually find with their date, time GMT+7, "
+        "event name, Forecast and Previous values. "
+        "If you cannot find specific numbers, write 'N/A' instead of guessing. "
+        "Do not make up any numbers.\n\n"
+        "Present results as a table with columns: "
+        "Date | Time (GMT+7) | Event | Forecast | Previous | Gold Impact\n"
+        "For Gold Impact: if Actual beats Forecast → USD stronger → Gold drops (Bearish Gold); "
+        "if Actual misses → USD weaker → Gold rises (Bullish Gold); "
+        "for speeches note Hawkish/Dovish implication."
+    )
+    return _query(prompt, api_key, system=system)
 
 
 def fetch_gold_news(api_key: str) -> str:
